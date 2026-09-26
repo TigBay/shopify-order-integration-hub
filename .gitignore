@@ -9,5 +9,9 @@
 /vendor/
 ###< symfony/framework-bundle ###
 
+###> docker/compose ###
+compose.override.yaml
+###< docker/compose ###
+
 .idea
 shopify/.shopify
