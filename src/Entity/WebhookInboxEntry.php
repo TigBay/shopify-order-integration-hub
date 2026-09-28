@@ -30,6 +30,9 @@ class WebhookInboxEntry
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private DateTimeImmutable $receivedAt;
 
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?DateTimeImmutable $processedAt = null;
+
     public function __construct(string $webhookId, string $topic, string $payload)
     {
         $this->webhookId = $webhookId;
@@ -61,5 +64,15 @@ class WebhookInboxEntry
     public function getReceivedAt(): DateTimeImmutable
     {
         return $this->receivedAt;
+    }
+
+    public function isProcessed(): bool
+    {
+        return $this->processedAt !== null;
+    }
+
+    public function markProcessed(): void
+    {
+        $this->processedAt = new DateTimeImmutable();
     }
 }

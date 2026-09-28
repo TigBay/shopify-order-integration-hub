@@ -16,10 +16,10 @@ final readonly class WebhookInbox
     }
 
     /**
-     * Records a webhook delivery. Returns false if this webhook_id was already
+     * Records a webhook delivery. Returns null if this webhook_id was already
      * recorded (duplicate delivery), so the caller can ack without reprocessing.
      */
-    public function record(string $webhookId, string $topic, string $payload): bool
+    public function record(string $webhookId, string $topic, string $payload): ?WebhookInboxEntry
     {
         $entry = new WebhookInboxEntry($webhookId, $topic, $payload);
         $this->entityManager->persist($entry);
@@ -29,9 +29,9 @@ final readonly class WebhookInbox
         } catch (UniqueConstraintViolationException) {
             $this->entityManager->detach($entry);
 
-            return false;
+            return null;
         }
 
-        return true;
+        return $entry;
     }
 }

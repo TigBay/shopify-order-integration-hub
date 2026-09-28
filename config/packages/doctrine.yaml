@@ -1,6 +1,10 @@
 doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
+        # Exclude the Messenger doctrine transport table from ORM schema
+        # comparisons, so migrations:diff / schema:validate don't try to
+        # "fix" the column comments Messenger's own schema listener sets.
+        schema_filter: ~^(?!messenger_messages)~
 
         # IMPORTANT: You MUST configure your server version,
         # either here or in the DATABASE_URL env var (see .env file)
