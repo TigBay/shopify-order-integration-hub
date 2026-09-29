@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -28,17 +27,17 @@ class WebhookInboxEntry
     private string $payload;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private DateTimeImmutable $receivedAt;
+    private \DateTimeImmutable $receivedAt;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    private ?DateTimeImmutable $processedAt = null;
+    private ?\DateTimeImmutable $processedAt = null;
 
     public function __construct(string $webhookId, string $topic, string $payload)
     {
         $this->webhookId = $webhookId;
         $this->topic = $topic;
         $this->payload = $payload;
-        $this->receivedAt = new DateTimeImmutable();
+        $this->receivedAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -61,18 +60,18 @@ class WebhookInboxEntry
         return $this->payload;
     }
 
-    public function getReceivedAt(): DateTimeImmutable
+    public function getReceivedAt(): \DateTimeImmutable
     {
         return $this->receivedAt;
     }
 
     public function isProcessed(): bool
     {
-        return $this->processedAt !== null;
+        return null !== $this->processedAt;
     }
 
     public function markProcessed(): void
     {
-        $this->processedAt = new DateTimeImmutable();
+        $this->processedAt = new \DateTimeImmutable();
     }
 }

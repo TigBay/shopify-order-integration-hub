@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Webhook;
 
-
 use App\Entity\WebhookInboxEntry;
 use Symfony\Component\DependencyInjection\Attribute\AsTaggedItem;
 

@@ -56,6 +56,11 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --no-progress --prefer-dist
 
+      # Formatting doesn't depend on the PHP version, so check it once, on the lowest supported one.
+      - name: Check coding standard
+        if: matrix.php == '8.4'
+        run: vendor/bin/php-cs-fixer check --diff
+
       - name: Lint container and config
         run: |
           bin/console lint:container

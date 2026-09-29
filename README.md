@@ -46,6 +46,15 @@ APP_ENV=test bin/console doctrine:migrations:migrate -n
 php bin/phpunit
 ```
 
+## Coding Standard
+
+Symfony coding standard via PHP-CS-Fixer (`@Symfony`), checked in CI.
+
+```bash
+vendor/bin/php-cs-fixer fix          # format the codebase
+git config core.hooksPath .githooks  # once per clone: check staged files before each commit
+```
+
 ## Design Decisions
 
 - [ADR 0001: Auth Strategy (Client Credentials Grant)](docs/adr/0001-auth-strategy.md)

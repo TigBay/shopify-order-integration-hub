@@ -38,7 +38,7 @@ final class GraphqlClient
         $data = $response->toArray();
 
         if (isset($data['errors'])) {
-            throw new \RuntimeException('GraphQL error: ' . json_encode($data['errors']));
+            throw new \RuntimeException('GraphQL error: '.json_encode($data['errors']));
         }
 
         return $data['data'];

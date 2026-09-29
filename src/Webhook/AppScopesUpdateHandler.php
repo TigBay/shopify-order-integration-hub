@@ -13,7 +13,6 @@ final readonly class AppScopesUpdateHandler implements WebhookTopicHandler
 {
     public function __construct(private LoggerInterface $logger)
     {
-
     }
 
     public function handle(WebhookInboxEntry $entry): void

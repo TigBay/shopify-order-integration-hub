@@ -11,16 +11,15 @@ final readonly class HmacVerifier
 {
     public function __construct(
         #[Autowire(env: 'SHOPIFY_CLIENT_SECRET')] private string $clientSecret,
-    )
-    {
+    ) {
     }
 
     public function isValid(Request $request): bool
     {
         $raw = $request->getContent();
-        $header = (string)$request->headers->get('X-Shopify-Hmac-Sha256');
+        $header = (string) $request->headers->get('X-Shopify-Hmac-Sha256');
 
-        if ($raw === '' || $header === '') {
+        if ('' === $raw || '' === $header) {
             return false;
         }
 

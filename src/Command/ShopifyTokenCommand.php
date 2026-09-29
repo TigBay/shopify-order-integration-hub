@@ -24,7 +24,7 @@ final class ShopifyTokenCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $token = $this->tokenProvider->getToken();
 
-        $io->success('Token retrieved (shortened to 12 chars): ' . substr($token, 0, 12) . '...');
+        $io->success('Token retrieved (shortened to 12 chars): '.substr($token, 0, 12).'...');
 
         return Command::SUCCESS;
     }

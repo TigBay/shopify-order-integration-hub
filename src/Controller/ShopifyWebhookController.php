@@ -15,19 +15,18 @@ final class ShopifyWebhookController extends AbstractController
 {
     #[Route('/webhooks/shopify', name: 'webhook_shopify', methods: ['POST'])]
     public function __invoke(
-        Request      $request,
+        Request $request,
         HmacVerifier $hmacVerifier,
         WebhookInbox $inbox,
-    ): Response
-    {
+    ): Response {
         if (!$hmacVerifier->isValid($request)) {
             return new Response(status: Response::HTTP_UNAUTHORIZED);
         }
 
-        $webhookId = (string)$request->headers->get('X-Shopify-Webhook-Id');
-        $topic = (string)$request->headers->get('X-Shopify-Topic');
+        $webhookId = (string) $request->headers->get('X-Shopify-Webhook-Id');
+        $topic = (string) $request->headers->get('X-Shopify-Topic');
 
-        if ($webhookId === '' || $topic === '') {
+        if ('' === $webhookId || '' === $topic) {
             return new Response(status: Response::HTTP_BAD_REQUEST);
         }
 

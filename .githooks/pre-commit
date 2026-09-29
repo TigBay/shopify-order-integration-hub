@@ -1,0 +1,11 @@
+#!/bin/sh
+# Checks staged PHP files against the coding standard (.php-cs-fixer.dist.php).
+# Enable once per clone: git config core.hooksPath .githooks
+
+files=$(git diff --cached --name-only --diff-filter=ACMR -- '*.php')
+[ -z "$files" ] && exit 0
+
+vendor/bin/php-cs-fixer check --config=.php-cs-fixer.dist.php --path-mode=intersection $files || {
+    echo "Coding standard violations found. Run: vendor/bin/php-cs-fixer fix"
+    exit 1
+}

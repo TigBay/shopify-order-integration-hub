@@ -13,7 +13,6 @@ final readonly class AppUninstalledHandler implements WebhookTopicHandler
 {
     public function __construct(private readonly TokenProvider $tokenProvider)
     {
-
     }
 
     public function handle(WebhookInboxEntry $entry): void

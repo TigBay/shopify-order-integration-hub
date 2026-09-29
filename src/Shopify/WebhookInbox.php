@@ -8,17 +8,14 @@ use App\Entity\WebhookInboxEntry;
 use App\Message\ProcessWebhook;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
-use LogicException;
 use Symfony\Component\Messenger\MessageBusInterface;
-use Throwable;
 
 final readonly class WebhookInbox
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-        private MessageBusInterface    $messageBus,
-    )
-    {
+        private MessageBusInterface $messageBus,
+    ) {
     }
 
     /**
@@ -34,17 +31,17 @@ final readonly class WebhookInbox
         try {
             $entry = $this->record($webhookId, $topic, $payload);
 
-            if ($entry !== null) {
-                $this->messageBus->dispatch(new ProcessWebhook($entry->getId() ?? throw new LogicException('Entry ID must be set after flush.')));
+            if (null !== $entry) {
+                $this->messageBus->dispatch(new ProcessWebhook($entry->getId() ?? throw new \LogicException('Entry ID must be set after flush.')));
             }
 
             $connection->commit();
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $connection->rollBack();
             throw $e;
         }
 
-        return $entry !== null;
+        return null !== $entry;
     }
 
     /**
