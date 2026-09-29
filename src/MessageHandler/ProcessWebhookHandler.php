@@ -28,7 +28,7 @@ final readonly class ProcessWebhookHandler
         $entry = $this->entityManager->find(WebhookInboxEntry::class, $message->webhookInboxEntryId);
 
         if (!$entry instanceof WebhookInboxEntry) {
-            throw new UnrecoverableMessageHandlingException(\sprintf('Webhook inbox entry %d not found.', $message->webhookInboxEntryId));
+            throw new UnrecoverableMessageHandlingException(\sprintf('Webhook inbox entry %d not found.', $entry->getTopic()));
         }
 
         if (!$this->topicHandlers->has($entry->getTopic())) {
