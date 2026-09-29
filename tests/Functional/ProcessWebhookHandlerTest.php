@@ -24,6 +24,7 @@ final class ProcessWebhookHandlerTest extends KernelTestCase
 
         $handler = self::getContainer()->get(ProcessWebhookHandler::class);
         $handler(new ProcessWebhook($entry->getId()));
+        $entityManager->refresh($entry);
 
         self::assertTrue($entry->isProcessed());
     }
@@ -32,6 +33,7 @@ final class ProcessWebhookHandlerTest extends KernelTestCase
     {
         self::bootKernel();
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+        $connection = $entityManager->getConnection();
 
         $entry = new WebhookInboxEntry('wh-handler-2', 'orders/create', '{"id":2}');
         $entityManager->persist($entry);
@@ -39,13 +41,19 @@ final class ProcessWebhookHandlerTest extends KernelTestCase
 
         $handler = self::getContainer()->get(ProcessWebhookHandler::class);
         $handler(new ProcessWebhook($entry->getId()));
-        $firstProcessedAt = $entry->isProcessed();
+        $firstProcessedAt = $connection->fetchOne(
+            'SELECT processed_at FROM webhook_inbox WHERE id = ?',
+            [$entry->getId()]
+        );
 
         // Simulate redelivery of the same message — must not throw or change state.
         $handler(new ProcessWebhook($entry->getId()));
 
-        self::assertTrue($firstProcessedAt);
-        self::assertTrue($entry->isProcessed());
+        self::assertNotNull($firstProcessedAt);
+        self::assertSame(
+            $firstProcessedAt,
+            $connection->fetchOne('SELECT processed_at FROM webhook_inbox WHERE id = ?', [$entry->getId()])
+        );
     }
 
     public function testUnknownEntryIdThrows(): void
