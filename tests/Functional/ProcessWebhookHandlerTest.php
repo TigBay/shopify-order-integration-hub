@@ -9,18 +9,10 @@ use App\Message\ProcessWebhook;
 use App\MessageHandler\ProcessWebhookHandler;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
 
 final class ProcessWebhookHandlerTest extends KernelTestCase
 {
-    protected function tearDown(): void
-    {
-        self::getContainer()->get(EntityManagerInterface::class)
-            ->getConnection()
-            ->executeStatement('TRUNCATE TABLE webhook_inbox');
-
-        parent::tearDown();
-    }
-
     public function testHandlingMarksEntryAsProcessed(): void
     {
         self::bootKernel();
@@ -62,7 +54,16 @@ final class ProcessWebhookHandlerTest extends KernelTestCase
 
         $handler = self::getContainer()->get(ProcessWebhookHandler::class);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(UnrecoverableMessageHandlingException::class);
         $handler(new ProcessWebhook(999999));
+    }
+
+    protected function tearDown(): void
+    {
+        self::getContainer()->get(EntityManagerInterface::class)
+            ->getConnection()
+            ->executeStatement('TRUNCATE TABLE webhook_inbox');
+
+        parent::tearDown();
     }
 }

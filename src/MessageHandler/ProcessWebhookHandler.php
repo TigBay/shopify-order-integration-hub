@@ -8,13 +8,16 @@ use App\Entity\WebhookInboxEntry;
 use App\Message\ProcessWebhook;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
+use function sprintf;
 
 #[AsMessageHandler]
 final readonly class ProcessWebhookHandler
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-    ) {
+    )
+    {
     }
 
     public function __invoke(ProcessWebhook $message): void
@@ -22,7 +25,7 @@ final readonly class ProcessWebhookHandler
         $entry = $this->entityManager->find(WebhookInboxEntry::class, $message->webhookInboxEntryId);
 
         if (!$entry instanceof WebhookInboxEntry) {
-            throw new \RuntimeException(\sprintf('Webhook inbox entry %d not found.', $message->webhookInboxEntryId));
+            throw new UnrecoverableMessageHandlingException(sprintf('Webhook inbox entry %d not found.', $message->webhookInboxEntryId));
         }
 
         if ($entry->isProcessed()) {
