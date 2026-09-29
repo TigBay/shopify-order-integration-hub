@@ -66,6 +66,25 @@ final class ProcessWebhookHandlerTest extends KernelTestCase
         $handler(new ProcessWebhook(999999));
     }
 
+    public function testUnknownTopicIsUnrecoverableAndStaysUnprocessed(): void
+    {
+        self::bootKernel();
+        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+
+        $entry = new WebhookInboxEntry('topic-test-1', 'foo/bar', '{"id":2}');
+        $entityManager->persist($entry);
+        $entityManager->flush();
+
+        $handler = self::getContainer()->get(ProcessWebhookHandler::class);
+        try {
+            $handler(new ProcessWebhook($entry->getId()));
+        } catch (UnrecoverableMessageHandlingException) {
+        }
+
+        $entityManager->refresh($entry);
+        self::assertFalse($entry->isProcessed());
+    }
+
     protected function tearDown(): void
     {
         self::getContainer()->get(EntityManagerInterface::class)

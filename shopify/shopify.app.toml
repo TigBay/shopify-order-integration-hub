@@ -12,11 +12,11 @@ automatically_update_urls_on_dev = true
 api_version = "2026-10"
 
   [[webhooks.subscriptions]]
-  uri = "/webhooks/app/scopes_update"
+  uri = "/webhooks/shopify"
   topics = [ "app/scopes_update" ]
 
   [[webhooks.subscriptions]]
-  uri = "/webhooks/app/uninstalled"
+  uri = "/webhooks/shopify"
   topics = [ "app/uninstalled" ]
 
   [[webhooks.subscriptions]]
@@ -24,7 +24,7 @@ api_version = "2026-10"
   topics = [ "orders/create" ]
 
   [[webhooks.subscriptions]]
-  uri = "/webhooks/compliance"
+  uri = "/webhooks/shopify"
   compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
 
 [access_scopes]

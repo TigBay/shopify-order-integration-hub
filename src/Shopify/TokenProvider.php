@@ -11,9 +11,11 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final readonly class TokenProvider
 {
+    public const string CACHE_KEY = 'shopify_access_token';
+
     public function __construct(
         private HttpClientInterface $client,
-        private CacheInterface      $cache,
+        private CacheInterface $cache,
         #[Autowire(env: 'SHOPIFY_SHOP')] private readonly string $shop,
         #[Autowire(env: 'SHOPIFY_CLIENT_ID')] private readonly string $clientId,
         #[Autowire(env: 'SHOPIFY_CLIENT_SECRET')] private readonly string $clientSecret,
@@ -22,7 +24,7 @@ final readonly class TokenProvider
 
     public function getToken(): string
     {
-        return $this->cache->get('shopify_access_token', function (ItemInterface $item): string {
+        return $this->cache->get(self::CACHE_KEY, function (ItemInterface $item): string {
             $response = $this->client->request('POST', "https://{$this->shop}/admin/oauth/access_token", [
                 'headers' => ['Content-Type' => 'application/x-www-form-urlencoded'],
                 'body' => [
@@ -39,5 +41,10 @@ final readonly class TokenProvider
 
             return $data['access_token'];
         });
+    }
+
+    public function forgetToken(): void
+    {
+        $this->cache->delete(self::CACHE_KEY);
     }
 }
