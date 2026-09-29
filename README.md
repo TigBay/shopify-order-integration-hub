@@ -1,5 +1,7 @@
 # Order & Inventory Integration Hub
 
+[![CI](https://github.com/TigBay/shopify-order-integration-hub/actions/workflows/ci.yml/badge.svg)](https://github.com/TigBay/shopify-order-integration-hub/actions/workflows/ci.yml)
+
 Symfony middleware that receives Shopify orders via webhook, enriches them with ERP data, and writes the results back via metafields.
 
 **Status:** 🚧 actively in development – M2 (webhook receiver & async processing) complete

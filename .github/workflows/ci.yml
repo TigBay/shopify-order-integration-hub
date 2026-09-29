@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Tests (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.4', '8.5']
+
+    services:
+      database:
+        image: postgres:16-alpine
+        # Must match DATABASE_URL in .env (the test env appends "_test" to the DB name).
+        env:
+          POSTGRES_DB: app
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: '!ChangeMe!'
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -d app -U app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      APP_ENV: test
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: ctype, iconv, pdo_pgsql
+          coverage: none
+
+      - name: Validate composer.json
+        run: composer validate --no-check-publish --strict
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Lint container and config
+        run: |
+          bin/console lint:container
+          bin/console lint:yaml config
+
+      - name: Set up test database
+        run: |
+          bin/console doctrine:database:create --if-not-exists
+          bin/console doctrine:migrations:migrate --no-interaction
+
+      # Validated with dev config: in the test env the async transport is in-memory,
+      # so Doctrine doesn't know about messenger_messages and would report drift.
+      - name: Validate Doctrine schema
+        env:
+          APP_ENV: dev
+        run: |
+          bin/console doctrine:migrations:migrate --no-interaction
+          bin/console doctrine:schema:validate
+
+      - name: Run tests
+        run: bin/phpunit
