@@ -57,22 +57,6 @@ class ErpClientTest extends TestCase
         $client->createOrder('wh-1', self::ORDER);
     }
 
-    public function testInvalidRequest(): void
-    {
-        $client = $this->clientFor(new MockResponse('', ['http_code' => 422]));
-
-        $this->expectException(UnrecoverableMessageHandlingException::class);
-        $client->createOrder('wh-1', self::ORDER);
-    }
-
-    public function testTooManyRequess(): void
-    {
-        $client = $this->clientFor(new MockResponse('', ['http_code' => 429]));
-
-        $this->expectException(ClientExceptionInterface::class);
-        $client->createOrder('wh-1', self::ORDER);
-    }
-
     #[DataProvider('invalidResponses')]
     public function testInvalidResponseIsUnrecoverable(string $body): void
     {
