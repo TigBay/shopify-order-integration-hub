@@ -10,15 +10,31 @@ use App\Message\ProcessWebhook;
 use App\MessageHandler\ProcessWebhookHandler;
 use App\Webhook\OrdersCreateHandler;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\Log\NullLogger;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
 use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
 
 final class OrdersCreateHandlerTest extends KernelTestCase
 {
+    public static function invalidOrderPayloads(): iterable
+    {
+        $item = ['sku' => 'ABC-1', 'quantity' => 1];
+
+        yield 'only id' => [['id' => 1], 'name, currency, line_items'];
+        yield 'name missing' => [['id' => 1, 'currency' => 'EUR', 'line_items' => [$item]], 'name'];
+        yield 'no line items' => [['id' => 1, 'name' => '#1', 'currency' => 'EUR', 'line_items' => []], 'line_items'];
+        yield 'line_items is not a list' => [['id' => 1, 'name' => '#1', 'currency' => 'EUR', 'line_items' => 'x'], 'line_items'];
+        yield 'second item without sku' => [
+            ['id' => 1, 'name' => '#1', 'currency' => 'EUR', 'line_items' => [$item, ['sku' => null, 'quantity' => 2]]],
+            'line_items[1].sku',
+        ];
+    }
+
     public function testOrderIsSentToErpAndMarkedProcessed(): void
     {
         self::bootKernel();
@@ -63,6 +79,18 @@ final class OrdersCreateHandlerTest extends KernelTestCase
         self::assertStringNotContainsString('Erika', $options['body']);
     }
 
+    private function handlerWith(MockResponse|MockHttpClient $erp): ProcessWebhookHandler
+    {
+        $httpClient = $erp instanceof MockHttpClient ? $erp : new MockHttpClient($erp, 'http://erp.test');
+        $erpClient = new ErpClient($httpClient);
+
+        $locator = new ServiceLocator([
+            'orders/create' => static fn () => new OrdersCreateHandler($erpClient, new NullLogger()),
+        ]);
+
+        return new ProcessWebhookHandler(self::getContainer()->get(EntityManagerInterface::class), $locator);
+    }
+
     public function testErpFailureReleasesTheClaimSoTheRetryCanProcessAgain(): void
     {
         self::bootKernel();
@@ -85,7 +113,7 @@ final class OrdersCreateHandlerTest extends KernelTestCase
         $thrown = null;
         try {
             $handler(new ProcessWebhook($entry->getId()));
-        } catch (ServerExceptionInterface $e) {
+        } catch (\Throwable $e) {
             $thrown = $e;
         }
 
@@ -95,15 +123,34 @@ final class OrdersCreateHandlerTest extends KernelTestCase
         self::assertNull($connection->fetchOne('SELECT processed_at FROM webhook_inbox WHERE id = ?', [$entry->getId()]));
     }
 
-    private function handlerWith(MockResponse $erpResponse): ProcessWebhookHandler
+    #[DataProvider('invalidOrderPayloads')]
+    public function testInvalidOrderPayloadIsUnrecoverableAndNeverReachesTheErp(array $payload, string $expectedErrors): void
     {
-        $erpClient = new ErpClient(new MockHttpClient($erpResponse, 'http://erp.test'));
+        self::bootKernel();
+        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+        $connection = $entityManager->getConnection();
 
-        $locator = new ServiceLocator([
-            'orders/create' => static fn () => new OrdersCreateHandler($erpClient, new NullLogger()),
-        ]);
+        $entry = new WebhookInboxEntry('wh-invalid-payload', 'orders/create', json_encode($payload, \JSON_THROW_ON_ERROR));
+        $entityManager->persist($entry);
+        $entityManager->flush();
 
-        return new ProcessWebhookHandler(self::getContainer()->get(EntityManagerInterface::class), $locator);
+        $erpClient = new MockHttpClient(new MockResponse('', ['http_code' => 201]), 'http://erp.test');
+        $handler = $this->handlerWith($erpClient);
+
+        $thrown = null;
+        try {
+            $handler(new ProcessWebhook($entry->getId()));
+        } catch (\Throwable $e) {
+            $thrown = $e;
+        }
+
+        // Unrecoverable → Messenger skips the retries and moves the message to the failure transport.
+        self::assertInstanceOf(UnrecoverableMessageHandlingException::class, $thrown);
+        self::assertStringContainsString($expectedErrors, $thrown->getMessage());
+        // The validation runs before the ERP call ...
+        self::assertSame(0, $erpClient->getRequestsCount());
+        // ... and the rollback leaves the entry unprocessed.
+        self::assertNull($connection->fetchOne('SELECT processed_at FROM webhook_inbox WHERE id = ?', [$entry->getId()]));
     }
 
     protected function tearDown(): void
