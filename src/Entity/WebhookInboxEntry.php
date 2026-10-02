@@ -12,6 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\UniqueConstraint(name: 'uniq_webhook_id', columns: ['webhook_id'])]
 class WebhookInboxEntry
 {
+    public const string REDACTED_PAYLOAD = '{"redacted":true}';
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER)]
@@ -73,5 +74,13 @@ class WebhookInboxEntry
     public function markProcessed(): void
     {
         $this->processedAt = new \DateTimeImmutable();
+    }
+
+    /**
+     * Drops the personal data from the payload; the row stays so webhook_id dedupe keeps working.
+     */
+    public function redact(): void
+    {
+        $this->payload = self::REDACTED_PAYLOAD;
     }
 }

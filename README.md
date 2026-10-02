@@ -62,3 +62,7 @@ git config core.hooksPath .githooks  # once per clone: check staged files before
 ## Roadmap
 
 Next up: P1-A – ERP enrichment (mocked via WireMock) and write-back of ERP order number and ship date via `metafieldsSet`.
+
+## Open ToDos
+
+- `customers/redact` reads payloads with PostgreSQL JSONB operators, so the redaction is PostgreSQL-only. Storing customer/order IDs in indexed columns would make it portable and faster; deferred until data volume warrants it.
