@@ -21,6 +21,14 @@ services:
       # - ./docker/db/data:/var/lib/postgresql/data:rw
 ###< doctrine/doctrine-bundle ###
 
+  erp-mock:
+    image: wiremock/wiremock:3.13.2
+    command: ["--global-response-templating"]
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./docker/wiremock:/home/wiremock
+
 volumes:
 ###> doctrine/doctrine-bundle ###
   database_data:

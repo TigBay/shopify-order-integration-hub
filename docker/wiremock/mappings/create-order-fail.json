@@ -1,0 +1,8 @@
+{
+    "priority": 1,
+    "request": {
+        "method": "POST", "urlPath": "/api/orders",
+        "bodyPatterns": [ { "matchesJsonPath": "$[?(@.orderName == '#FAIL')]" } ]
+    },
+    "response": { "status": 503 }
+}

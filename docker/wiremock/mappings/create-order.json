@@ -1,0 +1,11 @@
+{
+    "request": { "method": "POST", "urlPath": "/api/orders" },
+    "response": {
+        "status": 201,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+            "erpOrderNumber": "ERP-{{randomValue length=6 type='NUMERIC'}}",
+            "expectedShipDate": "{{now offset='3 days' format='yyyy-MM-dd'}}"
+        }
+    }
+}
