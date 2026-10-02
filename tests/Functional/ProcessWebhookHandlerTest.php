@@ -18,7 +18,7 @@ final class ProcessWebhookHandlerTest extends KernelTestCase
         self::bootKernel();
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
 
-        $entry = new WebhookInboxEntry('wh-handler-1', 'orders/create', '{"id":1}');
+        $entry = new WebhookInboxEntry('wh-handler-1', 'app/scopes_update', '{}');
         $entityManager->persist($entry);
         $entityManager->flush();
 
@@ -35,7 +35,7 @@ final class ProcessWebhookHandlerTest extends KernelTestCase
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
         $connection = $entityManager->getConnection();
 
-        $entry = new WebhookInboxEntry('wh-handler-2', 'orders/create', '{"id":2}');
+        $entry = new WebhookInboxEntry('wh-handler-2', 'app/scopes_update', '{}');
         $entityManager->persist($entry);
         $entityManager->flush();
 
