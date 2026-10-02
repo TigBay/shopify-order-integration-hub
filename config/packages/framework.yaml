@@ -8,6 +8,13 @@ framework:
     #esi: true
     #fragments: true
 
+    http_client:
+        scoped_clients:
+            erp.client:
+                base_uri: '%env(ERP_BASE_URL)%'
+                timeout: 5
+                headers: { Accept: 'application/json' }
+
 when@test:
     framework:
         test: true
