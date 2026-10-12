@@ -6,6 +6,7 @@ namespace App\Webhook;
 
 use App\Entity\WebhookInboxEntry;
 use App\Erp\ErpClient;
+use App\Shopify\OrderMetafieldWriter;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\AsTaggedItem;
 use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
@@ -13,7 +14,7 @@ use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
 #[AsTaggedItem(index: 'orders/create')]
 final readonly class OrdersCreateHandler implements WebhookTopicHandler
 {
-    public function __construct(private readonly ErpClient $erpClient, private readonly LoggerInterface $logger)
+    public function __construct(private readonly ErpClient $erpClient, private readonly LoggerInterface $logger, private OrderMetafieldWriter $metafieldWriter)
     {
     }
 
@@ -36,6 +37,8 @@ final readonly class OrdersCreateHandler implements WebhookTopicHandler
                 $payload['line_items'],
             ),
         ]);
+
+        $this->metafieldWriter->writeErpData($payload['id'], $result);
 
         $this->logger->info('Order sent to ERP', [
             'shopify_order_id' => $payload['id'],
