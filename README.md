@@ -4,7 +4,7 @@
 
 Symfony middleware that receives Shopify orders via webhook, enriches them with ERP data, and writes the results back via metafields.
 
-**Status:** 🚧 actively in development – M2 (webhook receiver & async processing) complete
+**Status:** 🚧 actively in development – M2 and P1-A (ERP enrichment & write-back) complete
 
 ## Problem & Business Scenario
 
@@ -21,13 +21,13 @@ PHP 8.4+, Symfony 8.1 (Messenger, HttpClient), Doctrine ORM + Migrations, Postgr
 - [x] `GraphqlClient` against the Admin API (verified with `shop { name currencyCode }`)
 - [x] Webhook receiver with HMAC verification and inbox deduplication (M2)
 - [x] Idempotent processing via Symfony Messenger (M2)
-- [ ] ERP enrichment (mocked via WireMock) + write-back via `metafieldsSet` (P1-A)
+- [x] ERP enrichment (mocked via WireMock) + write-back via `metafieldsSet` (P1-A)
 - [ ] Inventory sync, bulk import, reconciliation (P1-B)
 
 ## Quickstart
 
 ```bash
-docker compose up -d        # PostgreSQL 16
+docker compose up -d        # PostgreSQL 16 + WireMock ERP stub (port 8081)
 composer install
 # create .env.local with SHOPIFY_SHOP, SHOPIFY_CLIENT_ID, SHOPIFY_CLIENT_SECRET
 bin/console doctrine:migrations:migrate -n
@@ -58,11 +58,13 @@ git config core.hooksPath .githooks  # once per clone: check staged files before
 ## Design Decisions
 
 - [ADR 0001: Auth Strategy (Client Credentials Grant)](docs/adr/0001-auth-strategy.md)
+- [ADR 0002: ERP Call Inside the Claim Transaction](docs/adr/0002-erp-call-inside-transaction.md)
 
 ## Roadmap
 
-Next up: P1-A – ERP enrichment (mocked via WireMock) and write-back of ERP order number and ship date via `metafieldsSet`.
+Next up: P1-B – inventory sync, bulk import, reconciliation.
 
 ## Open ToDos
 
 - `customers/redact` reads payloads with PostgreSQL JSONB operators, so the redaction is PostgreSQL-only. Storing customer/order IDs in indexed columns would make it portable and faster; deferred until data volume warrants it.
+- The Shopify client has no explicit timeout and falls back to PHP's default idle timeout (60 s) while the claim transaction is open. Set a shorter one (see [ADR 0002](docs/adr/0002-erp-call-inside-transaction.md)).
