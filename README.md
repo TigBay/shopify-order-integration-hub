@@ -36,7 +36,14 @@ bin/console app:shopify:shop-info    # verify API access
 
 # in a second terminal: worker for async webhook processing
 bin/console messenger:consume async -vv
+
+# in a third terminal: start the app and send a signed test webhook
+symfony serve -d
+bin/console app:webhook:simulate --order-id=<id of an order in your dev store>
+bin/console app:webhook:simulate --fail    # ERP stub answers 503: retries, then the failure transport
 ```
+
+The ERP order number and ship date are written to the order as the metafields `erp.order_number` and `erp.expected_ship_date`; the Shopify Admin only displays them once matching metafield definitions exist (Settings → Custom data → Orders).
 
 ## Tests
 
